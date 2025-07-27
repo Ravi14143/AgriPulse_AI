@@ -1,0 +1,44 @@
+name: kishan
+description: A new Flutter project.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  google_fonts: ^6.2.0
+  http: ^1.2.1
+  image_picker: ^1.1.1
+  firebase_core: ^2.31.0
+  firebase_auth: ^4.20.0
+  cloud_firestore: ^4.15.5
+  firebase_storage: ^11.6.2
+  csc_picker: ^0.2.6
+  uuid: ^4.3.1
+  file_picker: ^6.2.0
+  path_provider: ^2.1.2
+  flutter_markdown: ^0.6.19
+  audioplayers: ^5.2.1
+  intl: ^0.18.1
+  record: ^5.0.4
+  path: ^1.9.0
+  flutter_tts: ^3.7.0
+  geolocator: ^11.0.0
+  geocoding: ^4.0.0
+  provider: ^6.1.2
+  cupertino_icons: ^1.0.8
+  url_launcher: ^6.1.10
+  firebase_messaging: ^14.7.1
+  flutter_local_notifications: ^19.4.0
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
