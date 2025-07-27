@@ -24,15 +24,16 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
   final TextEditingController _descController = TextEditingController();
   String _diagnosis = '';
   String _doctorName = '';
+  String _doctorMobile = '';
   bool _loading = false;
   String _status = '';
   final FlutterTts _flutterTts = FlutterTts();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   final String _backendUrl =
-      'http://10.32.225.74:5000'; // Replace with your backend URL
+      'http://10.30.1.173:5000'; // Update to actual IP or domain in production
   final String _googleApiKey =
-      'AIzaSyCL-1wDr3FKZmsjL4ui6tphOkdcdLjMv8Y'; // Replace with your Google Translate API key
+      'AIzaSyCL-1wDr3FKZmsjL4ui6tphOkdcdLjMv8Y'; // Replace with actual key
 
   final List<Map<String, String>> _supportedLanguages = [
     {'name': 'Hindi', 'code': 'hi'},
@@ -46,7 +47,6 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-
     if (picked != null) {
       setState(() {
         _selectedImage = picked;
@@ -115,11 +115,10 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
       }
 
       final streamedResponse = await request.send().timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw Exception("⏱️ Backend timeout. Check server connection.");
-        },
-      );
+            const Duration(seconds: 30),
+            onTimeout: () =>
+                throw Exception("⏱️ Backend timeout. Check server connection."),
+          );
 
       setState(() {
         _status = '🔬 Processing with backend...';
@@ -131,6 +130,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
         final jsonResponse = jsonDecode(response.body);
         final rawDiagnosis = jsonResponse['diagnosis'] ?? 'No diagnosis found';
         _doctorName = jsonResponse['doctorName'] ?? 'AI Assistant';
+        _doctorMobile = jsonResponse['doctorMobile'] ?? 'Not available';
 
         final translated =
             await _translateText(rawDiagnosis, _selectedLangCode);
@@ -151,9 +151,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
         _status = '❗ Diagnosis request failed.';
       });
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
     }
   }
 
@@ -165,6 +163,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
       'description': _descController.text,
       'diagnosisResult': _diagnosis,
       'doctorName': _doctorName,
+      'doctorMobile': _doctorMobile,
       'userId': widget.userId,
       'timestamp': Timestamp.now(),
     };
@@ -205,7 +204,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.camera_alt),
+                  icon: const Icon(Icons.image),
                   label: const Text('Upload Crop Image'),
                   onPressed: _pickImage,
                   style: ElevatedButton.styleFrom(
@@ -220,8 +219,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
                   decoration: InputDecoration(
                     labelText: 'Select Language',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     filled: true,
                     fillColor: const Color(0xFFF6FAF2),
                   ),
@@ -232,9 +230,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
                     );
                   }).toList(),
                   onChanged: (value) {
-                    setState(() {
-                      _selectedLangCode = value!;
-                    });
+                    setState(() => _selectedLangCode = value!);
                   },
                 ),
                 const SizedBox(height: 16),
@@ -244,8 +240,7 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
                   decoration: InputDecoration(
                     labelText: 'Optional description (symptoms, etc)',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                        borderRadius: BorderRadius.circular(12)),
                     filled: true,
                     fillColor: const Color(0xFFF6FAF2),
                   ),
@@ -289,22 +284,22 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (_diagnosis.isEmpty)
-                          const Text(
-                            'Diagnosis report will appear here.',
-                            style: TextStyle(fontSize: 16),
-                          )
+                          const Text('Diagnosis report will appear here.',
+                              style: TextStyle(fontSize: 16))
                         else ...[
                           MarkdownBody(
                             data: _diagnosis,
-                            styleSheet: MarkdownStyleSheet.fromTheme(
-                              Theme.of(context),
-                            ).copyWith(p: const TextStyle(fontSize: 16)),
+                            styleSheet:
+                                MarkdownStyleSheet.fromTheme(Theme.of(context))
+                                    .copyWith(p: const TextStyle(fontSize: 16)),
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            '👨‍⚕️ Diagnosed by: $_doctorName',
+                            '👨‍⚕️ Diagnosed by: $_doctorName\n📞 Mobile: $_doctorMobile',
                             style: const TextStyle(
-                                fontSize: 16, fontStyle: FontStyle.italic),
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -327,14 +322,16 @@ class _CropDiagnosisTabState extends State<CropDiagnosisTab> {
                             child: ElevatedButton.icon(
                               icon: const Icon(Icons.save),
                               label: const Text("Save"),
+                              onPressed: _diagnosis.isEmpty
+                                  ? null
+                                  : _saveDiagnosisToFirestore,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.blue,
                                 foregroundColor: Colors.white,
                               ),
-                              onPressed: _saveDiagnosisToFirestore,
                             ),
                           ),
-                        ],
+                        ]
                       ],
                     ),
                   ),
